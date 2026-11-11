@@ -6,6 +6,15 @@ name: QCA-ALL
 
 #CI计划
 on:
+  # RE-SS-01 配置/核心脚本变化时自动验证构建
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/QCA-ALL.yml'
+      - '.github/workflows/WRT-CORE.yml'
+      - 'Config/IPQ60XX-WIFI-NO.txt'
+      - 'Scripts/Settings.sh'
+
   #自动编译：当Auto-Clean运行完成后
   workflow_run:
     workflows: ["Auto-Clean"]
