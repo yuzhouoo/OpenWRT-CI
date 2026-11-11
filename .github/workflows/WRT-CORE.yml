@@ -125,9 +125,13 @@ jobs:
       - name: Clone Code
         id: clone-code
         run: |
-          git clone --depth=1 --single-branch --branch $WRT_BRANCH $WRT_REPO ./wrt/
+          git clone --branch "$WRT_BRANCH" "$WRT_REPO" ./wrt/
 
           cd ./wrt/
+
+          # Lock source to ImmortalWRT kernel 6.18.55
+          git checkout e695009c15c623f4f6a83376b505faaf7a4ae5b5
+
           WRT_HASH=$(git rev-parse HEAD)
           echo "WRT_HASH=$WRT_HASH" >> $GITHUB_ENV
           echo "WRT_CACHE_KEY=$WRT_CACHE_PREFIX-$WRT_HASH" >> $GITHUB_ENV
