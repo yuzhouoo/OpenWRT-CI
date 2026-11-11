@@ -79,11 +79,59 @@ PY
 fi
 
 #高通平台调整
-DTS_PATH="./target/linux/qualcommax/dts/"
 if [[ "${WRT_TARGET^^}" == *"QUALCOMMAX"* ]]; then
-	#无WIFI配置调整Q6大小
+	# WIFI-NO 只通过 .config 禁用无线驱动/固件。
+	# 不再批量改写 DTS/DTSI：RE-SS-01 的 QCA8075 以太网拓扑依赖设备树，
+	# 全局替换 SoC dtsi 风险过大，可能导致 LAN/WAN 不工作。
 	if [[ "$WRT_WIFI" == "WIFI-NO" ]]; then
-		find $DTS_PATH -type f ! -iname '*nowifi*' -exec sed -i 's/ipq\(6018\|8074\).dtsi/ipq\1-nowifi.dtsi/g' {} +
-		echo "qualcommax set up nowifi successfully!"
+		echo "qualcommax WIFI-NO: keep original DTS/DTSI; disable WiFi by package config only."
+	fi
+
+	# JDCloud RE-SS-01 是 eMMC 设备。上游当前设备定义只产 sysupgrade，
+	# 这里按设备块定向补齐 EmmcImage + factory.bin，避免影响其他机型。
+	if [[ "${WRT_CONFIG^^}" == "IPQ60XX-WIFI-NO" ]]; then
+		IMAGE_MK="./target/linux/qualcommax/image/ipq60xx.mk"
+		python3 - "$IMAGE_MK" <<'PY'
+import re
+import sys
+
+path = sys.argv[1]
+with open(path, "r", encoding="utf-8") as f:
+    data = f.read()
+
+pattern = r"(define Device/jdcloud_re-ss-01\n)(.*?)(\nendef)"
+m = re.search(pattern, data, flags=re.S)
+if not m:
+    raise SystemExit("ERROR: Device/jdcloud_re-ss-01 block not found")
+
+body = m.group(2)
+
+if "$(call Device/EmmcImage)" not in body:
+    anchor = "\t$(call Device/FitImage)"
+    if anchor not in body:
+        raise SystemExit("ERROR: RE-SS-01 FitImage anchor not found")
+    body = body.replace(anchor, anchor + "\n\t$(call Device/EmmcImage)", 1)
+
+factory = "\tIMAGE/factory.bin := append-kernel | pad-to $$(KERNEL_SIZE) | append-rootfs | append-metadata"
+if "IMAGE/factory.bin :=" not in body:
+    body = body.rstrip() + "\n" + factory
+
+new_block = m.group(1) + body + m.group(3)
+data = data[:m.start()] + new_block + data[m.end():]
+
+with open(path, "w", encoding="utf-8") as f:
+    f.write(data)
+PY
+
+		RE_SS_BLOCK="$(sed -n '/^define Device\/jdcloud_re-ss-01$/,/^endef$/p' "$IMAGE_MK")"
+		grep -q '\$(call Device/EmmcImage)' <<< "$RE_SS_BLOCK" || {
+			echo "ERROR: RE-SS-01 EmmcImage patch missing" >&2
+			exit 1
+		}
+		grep -q 'IMAGE/factory.bin := append-kernel | pad-to \$$(KERNEL_SIZE) | append-rootfs | append-metadata' <<< "$RE_SS_BLOCK" || {
+			echo "ERROR: RE-SS-01 factory.bin patch missing" >&2
+			exit 1
+		}
+		echo "RE-SS-01 image definition: sysupgrade + factory enabled."
 	fi
 fi
