@@ -41,8 +41,17 @@ fi
 echo "CONFIG_PACKAGE_luci=y" >> ./.config
 echo "CONFIG_LUCI_LANG_zh_Hans=y" >> ./.config
 echo "CONFIG_PACKAGE_luci-theme-$WRT_THEME=y" >> ./.config
-echo "CONFIG_PACKAGE_luci-app-$WRT_THEME=y" >> ./.config
-echo "CONFIG_PACKAGE_luci-app-$WRT_THEME-config=y" >> ./.config
+
+# bootstrap 是 LuCI 内置主题，没有 luci-app-bootstrap / config 包。
+# 第三方主题仅在对应包存在时再显式选择，避免最小构建拉入无关依赖。
+if [[ "$WRT_THEME" != "bootstrap" ]]; then
+  if find ./package ./feeds/luci -maxdepth 4 -type d -name "luci-app-$WRT_THEME" -print -quit 2>/dev/null | grep -q .; then
+    echo "CONFIG_PACKAGE_luci-app-$WRT_THEME=y" >> ./.config
+  fi
+  if find ./package ./feeds/luci -maxdepth 4 -type d -name "luci-app-$WRT_THEME-config" -print -quit 2>/dev/null | grep -q .; then
+    echo "CONFIG_PACKAGE_luci-app-$WRT_THEME-config=y" >> ./.config
+  fi
+fi
 
 #引入私有扩展配置
 if [ -f "$GITHUB_WORKSPACE/Config/PRIVATE.txt" ]; then
