@@ -135,3 +135,4 @@ PY
 		echo "RE-SS-01 image definition: sysupgrade + factory enabled."
 	fi
 fi
+# repair-build-trigger: RE-SS-01 network/factory validation
