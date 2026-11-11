@@ -125,8 +125,8 @@ jobs:
 
           cd ./wrt/
 
-          # Lock source to ImmortalWRT kernel 6.18.55
-          git checkout e695009c15c623f4f6a83376b505faaf7a4ae5b5
+          # Pin to a verified owrt revision that includes the IPQ60xx NSS/PPE stack.
+          git checkout d9f08be0523601ae81fdcc6979c08e93da3fa10c
 
           WRT_HASH=$(git rev-parse HEAD)
           echo "WRT_HASH=$WRT_HASH" >> $GITHUB_ENV
