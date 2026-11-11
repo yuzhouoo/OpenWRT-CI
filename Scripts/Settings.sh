@@ -55,6 +55,29 @@ if [ -n "$WRT_PACKAGE" ]; then
 	echo -e "$WRT_PACKAGE" >> ./.config
 fi
 
+
+#无 WIFI 固件隐藏 LuCI「网络 -> 无线」菜单
+if [[ "$WRT_WIFI" == "WIFI-NO" ]]; then
+	LUCI_NETWORK_MENU="./feeds/luci/modules/luci-mod-network/root/usr/share/luci/menu.d/luci-mod-network.json"
+	if [ -f "$LUCI_NETWORK_MENU" ]; then
+		python3 - "$LUCI_NETWORK_MENU" <<'PY'
+import json
+import sys
+
+path = sys.argv[1]
+with open(path, "r", encoding="utf-8") as f:
+    data = json.load(f)
+
+data.pop("admin/network/wireless", None)
+
+with open(path, "w", encoding="utf-8") as f:
+    json.dump(data, f, ensure_ascii=False, indent=2)
+    f.write("\n")
+PY
+		echo "LuCI wireless menu hidden for WIFI-NO build."
+	fi
+fi
+
 #高通平台调整
 DTS_PATH="./target/linux/qualcommax/dts/"
 if [[ "${WRT_TARGET^^}" == *"QUALCOMMAX"* ]]; then
