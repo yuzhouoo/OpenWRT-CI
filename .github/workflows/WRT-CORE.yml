@@ -63,7 +63,7 @@ env:
 jobs:
   core:
     name: ${{inputs.WRT_SOURCE}}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       cache_prefix: ${{steps.initialize-values.outputs.cache_prefix}}
       cache_key: ${{steps.clone-code.outputs.cache_key}}
@@ -75,10 +75,10 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
-          sudo apt-get -yqq purge firefox
-          sudo apt-get -yqq update
+          sudo apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update
 
-          sudo apt-get install -y --no-install-recommends \
+          sudo apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 \
+            install -y --fix-missing --no-install-recommends \
             bc bison build-essential bzip2 ca-certificates ccache clang \
             cmake cpio curl device-tree-compiler dos2unix file flex \
             g++-multilib gawk gcc-multilib genisoimage gettext git jq \
