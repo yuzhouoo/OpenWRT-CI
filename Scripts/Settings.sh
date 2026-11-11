@@ -24,6 +24,19 @@ sed -i "s/192\.168\.[0-9]*\.[0-9]*/$WRT_IP/g" $CFG_FILE
 #修改默认主机名
 sed -i "s/hostname='.*'/hostname='$WRT_NAME'/g" $CFG_FILE
 
+
+#添加自定义 APK 软件源
+APK_CUSTOM_FEEDS="./package/system/apk/files/customfeeds.list"
+if [ -f "$APK_CUSTOM_FEEDS" ]; then
+	cat > "$APK_CUSTOM_FEEDS" <<'EOF'
+# add your custom package feeds here
+#
+# http://www.example.com/path/to/files/packages.adb
+https://nikkinikki.pages.dev/SNAPSHOT/aarch64_cortex-a53/nikki/packages.adb
+https://down.dllkids.xyz/openwrt-feed/25.12/aarch64_cortex-a53/packages.adb
+EOF
+fi
+
 #配置文件修改
 echo "CONFIG_PACKAGE_luci=y" >> ./.config
 echo "CONFIG_LUCI_LANG_zh_Hans=y" >> ./.config
