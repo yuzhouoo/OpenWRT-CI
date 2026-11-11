@@ -264,6 +264,23 @@ jobs:
           cp -f ./.config ./upload/Config-"$WRT_CONFIG"-"$WRT_INFO"-"$WRT_BRANCH"-"$WRT_DATE".txt
 
           if [[ "$WRT_TEST" != 'true' ]]; then
+            if [[ "${WRT_CONFIG^^}" == "IPQ60XX-WIFI-NO" ]]; then
+              SYSUPGRADE_FILE=$(find ./bin/targets/qualcommax/ipq60xx/ -maxdepth 1 -type f -iname "*jdcloud_re-ss-01*sysupgrade.bin" -print -quit)
+              FACTORY_FILE=$(find ./bin/targets/qualcommax/ipq60xx/ -maxdepth 1 -type f -iname "*jdcloud_re-ss-01*factory.bin" -print -quit)
+
+              if [[ -z "$SYSUPGRADE_FILE" || ! -s "$SYSUPGRADE_FILE" ]]; then
+                echo "ERROR: RE-SS-01 sysupgrade.bin missing or empty" >&2
+                exit 1
+              fi
+              if [[ -z "$FACTORY_FILE" || ! -s "$FACTORY_FILE" ]]; then
+                echo "ERROR: RE-SS-01 factory.bin missing or empty" >&2
+                exit 1
+              fi
+
+              echo "Verified RE-SS-01 images:"
+              ls -lh "$SYSUPGRADE_FILE" "$FACTORY_FILE"
+            fi
+
             echo "WRT_KVER=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \;)" >> $GITHUB_ENV
             echo "WRT_LIST=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^luci-(app|theme)[^ ]*' {} \; | tr '\n' ' ')" >> $GITHUB_ENV
 
